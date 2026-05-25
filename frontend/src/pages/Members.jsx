@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { getMembers, createMember, updateMember, deleteMember } from '../api/api';
+import { 
+  getMembers, createMember, updateMember, deleteMember,
+  getMemberMemberships, getMemberBalance, getMemberAttendance, getPayments 
+} from '../api/api';
+
+function formatTL(val) {
+  if (val === undefined || val === null) return '0,00 ₺';
+  return Number(val).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
+}
 
 const EMPTY = { adi: '', soyadi: '', tckn: '', pasaport: '', telefon: '', mail: '' };
 
@@ -12,6 +20,12 @@ export default function Members() {
   const [editing, setEditing]   = useState(null);
   const [form,    setForm]      = useState(EMPTY);
   const [saving,  setSaving]    = useState(false);
+
+  // Detail Modal States
+  const [detailMember, setDetailMember] = useState(null);
+  const [detailData, setDetailData] = useState({ memberships: [], balance: 0, attendance: [], payments: [] });
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('profil');
 
   const load = () => {
     setLoading(true);
@@ -65,6 +79,34 @@ export default function Members() {
       load();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Silme işlemi başarısız oldu.');
+    }
+  };
+
+  const openDetail = async (m) => {
+    setDetailMember(m);
+    setDetailLoading(true);
+    setActiveTab('profil');
+    try {
+      const [msRes, balRes, attRes, payRes] = await Promise.all([
+        getMemberMemberships(m.uye_id),
+        getMemberBalance(m.uye_id),
+        getMemberAttendance(m.uye_id),
+        getPayments()
+      ]);
+      
+      const memberPayments = (payRes.data || []).filter(p => p.uye_id === m.uye_id);
+      
+      setDetailData({
+        memberships: msRes.data || [],
+        balance: balRes.data?.balance ?? 0.0,
+        attendance: attRes.data || [],
+        payments: memberPayments
+      });
+    } catch (err) {
+      toast.error('Üye detay bilgileri yüklenemedi.');
+      console.error(err);
+    } finally {
+      setDetailLoading(false);
     }
   };
 
@@ -143,8 +185,9 @@ export default function Members() {
                     </td>
                     <td>
                       <div className="flex gap-8">
-                        <button className="btn btn-secondary btn-sm" onClick={() => openEdit(m)}>✏️</button>
-                        <button className="btn btn-danger btn-sm"    onClick={() => handleDelete(m.uye_id)}>🗑️</button>
+                        <button className="btn btn-secondary btn-sm" title="Detaylı Profil" onClick={() => openDetail(m)}>🔍</button>
+                        <button className="btn btn-secondary btn-sm" title="Düzenle" onClick={() => openEdit(m)}>✏️</button>
+                        <button className="btn btn-danger btn-sm"    title="Sil" onClick={() => handleDelete(m.uye_id)}>🗑️</button>
                       </div>
                     </td>
                   </tr>
@@ -192,6 +235,223 @@ export default function Members() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Member Detail Modal */}
+      {detailMember && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setDetailMember(null)}>
+          <div className="modal" style={{ maxWidth: 700 }}>
+            <div className="modal-header">
+              <h3 className="modal-title">🔍 Üye Detay Portalı</h3>
+              <button className="modal-close" onClick={() => setDetailMember(null)}>✕</button>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, borderBottom: '1px solid var(--border)', marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
+              {[
+                { id: 'profil', label: '👤 Profil' },
+                { id: 'paket',  label: '🎯 Paket Geçmişi' },
+                { id: 'odeme',  label: '💳 Ödemeler & Bakiye' },
+                { id: 'katilim',label: '🚪 Katılım Günlüğü' },
+              ].map(t => (
+                <button
+                  key={t.id}
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: activeTab === t.id ? '2px solid var(--gold)' : '2px solid transparent',
+                    color: activeTab === t.id ? 'var(--gold)' : 'var(--text-secondary)',
+                    padding: '8px 12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    transition: 'var(--transition)',
+                    whiteSpace: 'nowrap'
+                  }}
+                  onClick={() => setActiveTab(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {detailLoading ? (
+              <div className="loading-spinner"><div className="spinner" /></div>
+            ) : (
+              <div>
+                {/* Profile Tab */}
+                {activeTab === 'profil' && (
+                  <div>
+                    <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
+                      <div style={{
+                        width: 60, height: 60, borderRadius: '50%',
+                        background: 'linear-gradient(135deg, var(--gold), var(--gold-dark))',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 28, boxShadow: 'var(--shadow-gold)', flexShrink: 0
+                      }}>
+                        🏋️
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: 20, fontWeight: 800 }}>{detailMember.adi} {detailMember.soyadi}</h2>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>ID: #{detailMember.uye_id} · TCKN: {detailMember.tckn}</p>
+                      </div>
+                    </div>
+
+                    <div className="form-grid" style={{ gap: 20 }}>
+                      <div>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', marginBottom: 4 }}>Telefon Numarası</span>
+                        <strong style={{ fontSize: 15 }}>{detailMember.telefon}</strong>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', marginBottom: 4 }}>E-posta Adresi</span>
+                        <strong style={{ fontSize: 15 }}>{detailMember.mail}</strong>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', marginBottom: 4 }}>Kayıt Tarihi</span>
+                        <strong style={{ fontSize: 15 }}>{formatDate(detailMember.kayit_tarihi)}</strong>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', marginBottom: 4 }}>Pasaport No</span>
+                        <strong style={{ fontSize: 15 }}>{detailMember.pasaport || '—'}</strong>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', marginBottom: 4 }}>Üyelik Durumu</span>
+                        <div>
+                          {detailMember.aktif_mi ? (
+                            <span className="badge badge-green" style={{ marginTop: 2 }}>✓ Aktif ({detailMember.kalan_gun} Gün Kaldı)</span>
+                          ) : (
+                            <span className="badge badge-red" style={{ marginTop: 2 }}>✗ Aktif Değil</span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', marginBottom: 4 }}>Kasa Bakiyesi</span>
+                        <div style={{ marginTop: 2 }}>
+                          {detailData.balance < 0 ? (
+                            <span className="badge badge-red">🔴 Borç: {formatTL(Math.abs(detailData.balance))}</span>
+                          ) : detailData.balance > 0 ? (
+                            <span className="badge badge-green">🟢 Alacak: {formatTL(detailData.balance)}</span>
+                          ) : (
+                            <span className="badge badge-gold">🟡 Borçsuz / Dengede</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Membership History Tab */}
+                {activeTab === 'paket' && (
+                  <div className="table-wrapper">
+                    {detailData.memberships.length === 0 ? (
+                      <div className="empty-state" style={{ padding: '20px 10px' }}><p>Bu üyeye tanımlı paket bulunamadı.</p></div>
+                    ) : (
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Uyelik ID</th><th>Paket</th><th>Başlangıç</th><th>Bitiş</th><th>Durum</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {detailData.memberships.map(m => (
+                            <tr key={m.uyelik_id}>
+                              <td className="td-muted">#{m.uyelik_id}</td>
+                              <td><strong>{m.paket_adi || 'Paket'}</strong></td>
+                              <td className="td-muted">{formatDate(m.baslangic_tarihi)}</td>
+                              <td className="td-muted">{formatDate(m.bitis_tarihi)}</td>
+                              <td>
+                                {m.durum === 'Aktif' ? (
+                                  <span className="badge badge-green">Aktif</span>
+                                ) : m.durum === 'Pasif' ? (
+                                  <span className="badge badge-red">Pasif</span>
+                                ) : (
+                                  <span className="badge badge-orange">Beklemede</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
+
+                {/* Payments Tab */}
+                {activeTab === 'odeme' && (
+                  <div>
+                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '14px 18px', borderRadius: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, border: '1px solid var(--border)' }}>
+                      <div>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Net Hesap Bakiyesi</span>
+                        <h4 style={{ fontSize: 18, fontWeight: 800, color: detailData.balance < 0 ? 'var(--red)' : detailData.balance > 0 ? 'var(--green)' : 'var(--gold)', marginTop: 4 }}>
+                          {detailData.balance < 0 ? `- ${formatTL(Math.abs(detailData.balance))} (Borçlu)` : detailData.balance > 0 ? `+ ${formatTL(detailData.balance)} (Fazla Ödeme)` : '0,00 ₺ (Lunas)'}
+                        </h4>
+                      </div>
+                      <span style={{ fontSize: 28 }}>💳</span>
+                    </div>
+
+                    <div className="table-wrapper">
+                      {!detailData.payments || detailData.payments.length === 0 ? (
+                        <div className="empty-state" style={{ padding: '20px 10px' }}><p>Kayıtlı ödeme bulunmamaktadır.</p></div>
+                      ) : (
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>ID</th><th>Tutar</th><th>Tür</th><th>Tarih</th><th>Açıklama</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {detailData.payments.map(p => (
+                              <tr key={p.odeme_id}>
+                                <td className="td-muted">#{p.odeme_id}</td>
+                                <td><strong className="text-gold">{formatTL(p.odeme_tutari)}</strong></td>
+                                <td className="td-muted">{p.odeme_turu}</td>
+                                <td className="td-muted">{formatDate(p.odeme_tarihi)}</td>
+                                <td className="td-muted" style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.aciklama}>
+                                  {p.aciklama || '—'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Attendance Tab */}
+                {activeTab === 'katilim' && (
+                  <div className="table-wrapper">
+                    {detailData.attendance.length === 0 ? (
+                      <div className="empty-state" style={{ padding: '20px 10px' }}><p>Giriş-çıkış kaydı bulunamadı.</p></div>
+                    ) : (
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Kayıt ID</th><th>Giriş Zamanı</th><th>Çıkış Zamanı</th><th>Süre</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {detailData.attendance.map(a => (
+                            <tr key={a.log_id}>
+                              <td className="td-muted">#{a.log_id}</td>
+                              <td className="td-muted">{formatDate(a.giris_zamani)}</td>
+                              <td className="td-muted">{a.cikis_zamani ? formatDate(a.cikis_zamani) : <span className="badge badge-orange">İçeride</span>}</td>
+                              <td>{a.sure_dakika != null ? <span className="badge badge-blue">{a.sure_dakika} dk</span> : '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="modal-footer" style={{ marginTop: 24 }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setDetailMember(null)}>Kapat</button>
+            </div>
           </div>
         </div>
       )}

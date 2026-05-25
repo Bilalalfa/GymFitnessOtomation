@@ -27,6 +27,8 @@ export const createMembership       = (d)   => api.post('/memberships/', d);
 export const getPayments      = ()          => api.get('/payments/');
 export const createPayment    = (data)      => api.post('/payments/', data);
 export const deletePayment    = (id)        => api.delete(`/payments/${id}`);
+export const getMemberBalance = (id)        => api.get(`/payments/balance/${id}`);
+
 
 // ── Attendance ────────────────────────────────────────────────────────────────
 export const getAttendance    = ()          => api.get('/attendance/');

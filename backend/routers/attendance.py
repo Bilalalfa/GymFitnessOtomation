@@ -34,6 +34,16 @@ def get_attendance_logs():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/member/{uye_id}")
+def get_member_attendance_logs(uye_id: str):
+    try:
+        results = call_procedure("gym_GirisCikislariGetir")
+        logs = results[0] if results else []
+        return [l for l in logs if l.get("uye_id") == uye_id]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/checkin", status_code=201)
 def check_in_member(req: CheckInRequest):
     try:

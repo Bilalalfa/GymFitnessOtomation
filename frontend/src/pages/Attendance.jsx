@@ -9,6 +9,8 @@ export default function Attendance() {
   const [selMember, setSelMember] = useState('');
   const [checkingIn, setCheckingIn] = useState(false);
   const [search,   setSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -29,6 +31,7 @@ export default function Attendance() {
       const res = await checkIn(selMember);
       toast.success(`Üye girişi onaylandı! Kayıt No: #${res.data.log_id}`);
       setSelMember('');
+      setSearchQuery('');
       load();
     } catch (err) {
       const msg = err.response?.data?.detail || '';
@@ -56,6 +59,10 @@ export default function Attendance() {
 
   const filtered = logs.filter(l =>
     `${l.uye_ad_soyad} ${l.tckn}`.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredSuggestions = members.filter(m =>
+    `${m.uye_id} ${m.adi} ${m.soyadi} ${m.tckn} ${m.pasaport}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const fmtDt = dt => {
@@ -95,17 +102,67 @@ export default function Attendance() {
           ⚡ Veritabanı tetikleyicisi (Trigger), üyeliği bulunmayan ya da süresi dolmuş üyelerin giriş yapmasını otomatik olarak engeller.
         </p>
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div className="form-group" style={{ flex: 1, minWidth: 220 }}>
+          <div className="form-group" style={{ flex: 1, minWidth: 220, position: 'relative' }}>
             <label className="form-label">Üye Seçin</label>
-            <select className="form-control" value={selMember}
-              onChange={e => setSelMember(e.target.value)}>
-              <option value="">-- Üye seçin --</option>
-              {members.map(m => (
-                <option key={m.uye_id} value={m.uye_id}>
-                  #{m.uye_id} — {m.adi} {m.soyadi} ({m.aktif_mi ? '✓ Aktif' : '✗ Aktif Değil'})
-                </option>
-              ))}
-            </select>
+            <div className="autocomplete-container">
+              <input
+                className="form-control"
+                placeholder="Üye adı, TCKN, Pasaport veya Üye ID ile arayın..."
+                value={searchQuery}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                onChange={e => {
+                  setSearchQuery(e.target.value);
+                  setSelMember('');
+                  setShowSuggestions(true);
+                }}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="suggestion-clear"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelMember('');
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+              {showSuggestions && searchQuery && (
+                <div className="suggestions-list">
+                  {filteredSuggestions.length === 0 ? (
+                    <div style={{ padding: '10px 14px', color: 'var(--text-muted)', fontSize: 13 }}>
+                      Eşleşen üye bulunamadı.
+                    </div>
+                  ) : (
+                    filteredSuggestions.slice(0, 10).map(m => (
+                      <div
+                        key={m.uye_id}
+                        className="suggestion-item"
+                        onMouseDown={() => {
+                          setSelMember(m.uye_id);
+                          setSearchQuery(`#${m.uye_id} — ${m.adi} ${m.soyadi}`);
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        <div>
+                          <strong>{m.adi} {m.soyadi}</strong>
+                          <span style={{ color: 'var(--text-muted)', fontSize: 12, marginLeft: 8 }}>
+                            (ID: #{m.uye_id} · {m.tckn || 'Pasaport: ' + m.pasaport})
+                          </span>
+                        </div>
+                        {m.aktif_mi ? (
+                          <span className="badge badge-green" style={{ fontSize: 10, padding: '2px 8px' }}>✓ Aktif</span>
+                        ) : (
+                          <span className="badge badge-red" style={{ fontSize: 10, padding: '2px 8px' }}>✗ Aktif Değil</span>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <button
             className="btn btn-primary"
