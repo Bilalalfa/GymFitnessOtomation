@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { 
+  Target, 
+  Plus, 
+  CheckCircle2, 
+  XCircle, 
+  Clock, 
+  AlertTriangle, 
+  Loader2, 
+  X 
+} from 'lucide-react';
 import { getMemberships, createMembership, getMembers, getPackages } from '../api/api';
 
 const EMPTY = { uye_id: '', paket_id: '', baslangic_tarihi: new Date().toISOString().slice(0, 10) };
@@ -53,9 +63,19 @@ export default function Memberships() {
   const filtered = list.filter(m => filter === 'Tümü' || m.durum === filter);
 
   const statusBadge = s =>
-    s === 'Aktif'     ? <span className="badge badge-green">✓ Aktif</span>   :
-    s === 'Pasif'     ? <span className="badge badge-red">✗ Pasif</span>     :
-                        <span className="badge badge-orange">⏳ Beklemede</span>;
+    s === 'Aktif' ? (
+      <span className="badge badge-green">
+        <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Aktif
+      </span>
+    ) : s === 'Pasif' ? (
+      <span className="badge badge-red">
+        <XCircle size={12} style={{ marginRight: 4 }} /> Pasif
+      </span>
+    ) : (
+      <span className="badge badge-orange">
+        <Clock size={12} style={{ marginRight: 4 }} /> Beklemede
+      </span>
+    );
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
@@ -75,12 +95,17 @@ export default function Memberships() {
   return (
     <div>
       <div className="page-header">
-        <div>
-          <h2 className="page-title">🎯 Üyelikler</h2>
-          <p className="page-subtitle">Üyelerin satın aldığı aktif ve geçmiş paketler</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ background: 'var(--gold-glow)', padding: '10px', borderRadius: '12px', border: '1px solid var(--border-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Target size={28} className="text-gold" />
+          </div>
+          <div>
+            <h2 className="page-title">Üyelikler</h2>
+            <p className="page-subtitle">Üyelerin satın aldığı aktif ve geçmiş paketler</p>
+          </div>
         </div>
         <button className="btn btn-primary" onClick={() => { setForm(EMPTY); setModal(true); }}>
-          ＋ Yeni Üyelik Ekle
+          <Plus size={16} /> Yeni Üyelik Ekle
         </button>
       </div>
 
@@ -101,10 +126,14 @@ export default function Memberships() {
         </div>
 
         {loading ? (
-          <div className="loading-spinner"><div className="spinner" /></div>
+          <div className="loading-spinner">
+            <Loader2 size={36} className="text-gold" style={{ animation: 'spin 1s linear infinite' }} />
+          </div>
         ) : filtered.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">🎯</div>
+            <div className="empty-icon">
+              <Target size={48} style={{ opacity: 0.5 }} />
+            </div>
             <p>Seçilen kriterlere uygun üyelik kaydı bulunamadı.</p>
           </div>
         ) : (
@@ -132,8 +161,8 @@ export default function Memberships() {
                     <td className="td-muted">
                       {formatDate(m.bitis_tarihi)}
                       {m.durum === 'Aktif' && (
-                        <div style={{ fontSize: 11, color: 'var(--green)', marginTop: 2 }}>
-                          {getRemainingDays(m.bitis_tarihi)} gün kaldı
+                        <div style={{ fontSize: 11, color: 'var(--green)', marginTop: 2, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Clock size={11} /> {getRemainingDays(m.bitis_tarihi)} gün kaldı
                         </div>
                       )}
                     </td>
@@ -154,11 +183,17 @@ export default function Memberships() {
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModal(false)}>
           <div className="modal">
             <div className="modal-header">
-              <h3 className="modal-title">➕ Yeni Üyelik Tanımla</h3>
-              <button className="modal-close" onClick={() => setModal(false)}>✕</button>
+              <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Plus size={20} className="text-gold" />
+                Yeni Üyelik Tanımla
+              </h3>
+              <button className="modal-close" onClick={() => setModal(false)}>
+                <X size={20} />
+              </button>
             </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 20 }}>
-              ⚠️ Bir üyenin aynı zaman diliminde yalnızca <strong>1 aktif üyeliği</strong> olabilir.
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: '6px', background: 'rgba(249,115,22,0.05)', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(249,115,22,0.2)' }}>
+              <AlertTriangle size={16} className="text-orange" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <span>Bir üyenin aynı zaman diliminde yalnızca <strong>1 aktif üyeliği</strong> olabilir.</span>
             </p>
             <form onSubmit={handleSubmit}>
               <div className="form-grid" style={{ gridTemplateColumns: '1fr' }}>
@@ -195,7 +230,15 @@ export default function Memberships() {
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setModal(false)}>İptal</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? '⏳ Kaydediliyor...' : '✅ Üyelik Tanımla'}
+                  {saving ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Kaydediliyor...
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <CheckCircle2 size={16} /> Üyelik Tanımla
+                    </span>
+                  )}
                 </button>
               </div>
             </form>

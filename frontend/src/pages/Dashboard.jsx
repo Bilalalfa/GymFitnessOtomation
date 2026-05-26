@@ -3,6 +3,17 @@ import {
   AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
+import { 
+  Dumbbell, 
+  Users, 
+  Target, 
+  DoorOpen, 
+  Coins, 
+  TrendingUp, 
+  DollarSign, 
+  CreditCard, 
+  Landmark 
+} from 'lucide-react';
 import { getDashboard, getPayments, getMemberships } from '../api/api';
 
 const COLORS = ['#22c55e', '#f97316', '#3b82f6']; // green=Aktif, orange=Pasif, blue=Beklemede
@@ -10,8 +21,8 @@ const COLORS = ['#22c55e', '#f97316', '#3b82f6']; // green=Aktif, orange=Pasif, 
 function StatCard({ icon, title, value, sub, color }) {
   return (
     <div className="stat-card">
-      <div className="stat-icon" style={{ background: `${color}20` }}>
-        <span style={{ fontSize: 26 }}>{icon}</span>
+      <div className="stat-icon" style={{ background: `${color}20`, color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {icon}
       </div>
       <div className="stat-info">
         <h3 style={{ color }}>{value}</h3>
@@ -77,18 +88,39 @@ export default function Dashboard() {
   };
 
   const getMethodLabel = (t) => {
-    if (t === 'Nakit' || t === 'Tunai') return '💵 Nakit';
-    if (t === 'Kredi Kartı' || t === 'Kartu Kredit') return '💳 Kredi Kartı';
-    return '🏦 Banka Havalesi';
+    if (t === 'Nakit' || t === 'Tunai') {
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          <DollarSign size={14} /> Nakit
+        </span>
+      );
+    }
+    if (t === 'Kredi Kartı' || t === 'Kartu Kredit') {
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          <CreditCard size={14} /> Kredi Kartı
+        </span>
+      );
+    }
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+        <Landmark size={14} /> Banka Havalesi
+      </span>
+    );
   };
 
   return (
     <div>
       {/* Header */}
       <div className="page-header">
-        <div>
-          <h2 className="page-title">🏋️ Kontrol Paneli</h2>
-          <p className="page-subtitle">Olympus Fitness Center — Gerçek zamanlı veri analizi</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ background: 'var(--gold-glow)', padding: '10px', borderRadius: '12px', border: '1px solid var(--border-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Dumbbell size={28} className="text-gold" style={{ transform: 'rotate(-45deg)' }} />
+          </div>
+          <div>
+            <h2 className="page-title">Kontrol Paneli</h2>
+            <p className="page-subtitle">Olympus Fitness Center — Gerçek zamanlı veri analizi</p>
+          </div>
         </div>
         <span className="badge badge-gold">
           {new Date().toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -97,11 +129,11 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="stats-grid">
-        <StatCard icon="👥" title="Toplam Üye"     value={stats?.ToplamUye    ?? 0} color="#d4af37" sub="Kayıtlı" />
-        <StatCard icon="🎯" title="Aktif Üyelik" value={stats?.AktifUyelik  ?? 0} color="#22c55e" sub="Bugün İtibariyle" />
-        <StatCard icon="🚪" title="Bugünkü Girişler" value={stats?.BugunGiris   ?? 0} color="#3b82f6" sub="Ziyaret Sayısı" />
-        <StatCard icon="💰" title="Bu Ayki Gelir" value={formatTL(stats?.BuAyGelir)} color="#f97316" sub="KDV Dahil" />
-        <StatCard icon="📈" title="Toplam Ciro"  value={formatTL(stats?.ToplamGelir)} color="#d4af37" sub="Tüm Zamanlar" />
+        <StatCard icon={<Users size={24} />} title="Toplam Üye"     value={stats?.ToplamUye    ?? 0} color="#d4af37" sub="Kayıtlı" />
+        <StatCard icon={<Target size={24} />} title="Aktif Üyelik" value={stats?.AktifUyelik  ?? 0} color="#22c55e" sub="Bugün İtibariyle" />
+        <StatCard icon={<DoorOpen size={24} />} title="Bugünkü Girişler" value={stats?.BugunGiris   ?? 0} color="#3b82f6" sub="Ziyaret Sayısı" />
+        <StatCard icon={<Coins size={24} />} title="Bu Ayki Gelir" value={formatTL(stats?.BuAyGelir)} color="#f97316" sub="KDV Dahil" />
+        <StatCard icon={<TrendingUp size={24} />} title="Toplam Ciro"  value={formatTL(stats?.ToplamGelir)} color="#d4af37" sub="Tüm Zamanlar" />
       </div>
 
       {/* Charts */}
@@ -109,7 +141,7 @@ export default function Dashboard() {
         {/* Revenue Area Chart */}
         <div className="card">
           <div className="card-header">
-            <h3 className="card-title">📊 Aylık Gelir Analizi</h3>
+            <h3 className="card-title">Aylık Gelir Analizi</h3>
           </div>
           {revenueData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
@@ -133,7 +165,7 @@ export default function Dashboard() {
         {/* Membership Pie */}
         <div className="card">
           <div className="card-header">
-            <h3 className="card-title">🎯 Üyelik Durum Grafiği</h3>
+            <h3 className="card-title">Üyelik Durum Grafiği</h3>
           </div>
           {memberships.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
@@ -151,7 +183,7 @@ export default function Dashboard() {
       {/* Recent Payments */}
       <div className="card">
         <div className="card-header">
-          <h3 className="card-title">💳 Son Ödeme Kayıtları</h3>
+          <h3 className="card-title">Son Ödeme Kayıtları</h3>
           <span className="badge badge-gold">Son 8 İşlem</span>
         </div>
         {payments.length > 0 ? (
@@ -183,7 +215,7 @@ export default function Dashboard() {
               </tbody>
             </table>
           </div>
-        ) : <div className="empty-state"><div className="empty-icon">💳</div><p>Kayıtlı ödeme bulunmamaktadır.</p></div>}
+        ) : <div className="empty-state"><div className="empty-icon"><CreditCard size={48} style={{ opacity: 0.5 }} /></div><p>Kayıtlı ödeme bulunmamaktadır.</p></div>}
       </div>
     </div>
   );

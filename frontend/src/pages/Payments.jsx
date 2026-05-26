@@ -1,5 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { 
+  CreditCard, 
+  Plus, 
+  Search, 
+  Trash2, 
+  Coins, 
+  BarChart2, 
+  DollarSign, 
+  Landmark, 
+  Receipt, 
+  Loader2, 
+  X 
+} from 'lucide-react';
 import { getPayments, createPayment, deletePayment, getMembers } from '../api/api';
 
 const PAYMENT_TYPES = ['Nakit', 'Kredi Kartı', 'Banka Havalesi'];
@@ -68,11 +81,19 @@ export default function Payments() {
   const total = filtered.reduce((s, p) => s + Number(p.odeme_tutari), 0);
 
   const methodBadge = t =>
-    t === 'Nakit' || t === 'Tunai'
-      ? <span className="badge badge-green">💵 Nakit</span>    :
-    t === 'Kredi Kartı' || t === 'Kartu Kredit'
-      ? <span className="badge badge-blue">💳 Kredi Kartı</span> :
-        <span className="badge badge-orange">🏦 Banka Havalesi</span>;
+    t === 'Nakit' || t === 'Tunai' ? (
+      <span className="badge badge-green">
+        <DollarSign size={12} style={{ marginRight: 4 }} /> Nakit
+      </span>
+    ) : t === 'Kredi Kartı' || t === 'Kartu Kredit' ? (
+      <span className="badge badge-blue">
+        <CreditCard size={12} style={{ marginRight: 4 }} /> Kredi Kartı
+      </span>
+    ) : (
+      <span className="badge badge-orange">
+        <Landmark size={12} style={{ marginRight: 4 }} /> Banka Havalesi
+      </span>
+    );
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
@@ -93,24 +114,29 @@ export default function Payments() {
   return (
     <div>
       <div className="page-header">
-        <div>
-          <h2 className="page-title">💳 Ödemeler</h2>
-          <p className="page-subtitle">Üye paket satışları ve ödeme tahsilat geçmişi</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ background: 'var(--gold-glow)', padding: '10px', borderRadius: '12px', border: '1px solid var(--border-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CreditCard size={28} className="text-gold" />
+          </div>
+          <div>
+            <h2 className="page-title">Ödemeler</h2>
+            <p className="page-subtitle">Üye paket satışları ve ödeme tahsilat geçmişi</p>
+          </div>
         </div>
         <button className="btn btn-primary" onClick={() => { setForm(EMPTY); setModal(true); }}>
-          ＋ Ödeme Tahsil Et
+          <Plus size={16} /> Ödeme Tahsil Et
         </button>
       </div>
 
       {/* Summary bar */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 24 }}>
         {[
-          { label: 'Toplam İşlem',   value: filtered.length,                    icon: '🧾', color: 'var(--blue)'   },
-          { label: 'Toplam Gelir',  value: formatTL(total),                    icon: '💰', color: 'var(--gold)'   },
-          { label: 'Ortalama Tutar', value: formatTL(filtered.length ? total / filtered.length : 0), icon: '📊', color: 'var(--green)' },
+          { label: 'Toplam İşlem',   value: filtered.length,                    icon: <Receipt size={28} className="text-blue" />, color: 'var(--blue)'   },
+          { label: 'Toplam Gelir',  value: formatTL(total),                    icon: <Coins size={28} className="text-gold" />, color: 'var(--gold)'   },
+          { label: 'Ortalama Tutar', value: formatTL(filtered.length ? total / filtered.length : 0), icon: <BarChart2 size={28} className="text-green" />, color: 'var(--green)' },
         ].map(s => (
           <div key={s.label} className="card" style={{ display:'flex', alignItems:'center', gap:14 }}>
-            <span style={{ fontSize: 28 }}>{s.icon}</span>
+            {s.icon}
             <div>
               <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.value}</div>
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{s.label}</div>
@@ -122,17 +148,21 @@ export default function Payments() {
       <div className="card">
         <div className="card-header">
           <div className="search-bar">
-            🔍
+            <Search size={18} className="text-muted" />
             <input placeholder="Üye adı veya ödeme türü ile ara..." value={search}
               onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
 
         {loading ? (
-          <div className="loading-spinner"><div className="spinner" /></div>
+          <div className="loading-spinner">
+            <Loader2 size={36} className="text-gold" style={{ animation: 'spin 1s linear infinite' }} />
+          </div>
         ) : filtered.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">💳</div>
+            <div className="empty-icon">
+              <CreditCard size={48} style={{ opacity: 0.5 }} />
+            </div>
             <p>Seçilen kriterlere uygun ödeme kaydı bulunamadı.</p>
           </div>
         ) : (
@@ -159,7 +189,9 @@ export default function Payments() {
                       {p.aciklama || '—'}
                     </td>
                     <td>
-                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p.odeme_id)}>🗑️</button>
+                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p.odeme_id)}>
+                        <Trash2 size={14} />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -174,8 +206,13 @@ export default function Payments() {
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModal(false)}>
           <div className="modal">
             <div className="modal-header">
-              <h3 className="modal-title">➕ Ödeme Tahsil Et</h3>
-              <button className="modal-close" onClick={() => setModal(false)}>✕</button>
+              <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Plus size={20} className="text-gold" />
+                Ödeme Tahsil Et
+              </h3>
+              <button className="modal-close" onClick={() => setModal(false)}>
+                <X size={20} />
+              </button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-grid" style={{ gridTemplateColumns: '1fr' }}>
@@ -217,7 +254,15 @@ export default function Payments() {
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setModal(false)}>İptal</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? '⏳ Kaydediliyor...' : '💾 Ödemeyi Kaydet'}
+                  {saving ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Kaydediliyor...
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <CreditCard size={16} /> Ödemeyi Kaydet
+                    </span>
+                  )}
                 </button>
               </div>
             </form>

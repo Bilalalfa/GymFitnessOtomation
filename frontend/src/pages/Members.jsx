@@ -1,6 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { 
+  Users, 
+  Plus, 
+  Search, 
+  Edit, 
+  Trash2, 
+  User, 
+  Award, 
+  CreditCard, 
+  Clock, 
+  Dumbbell, 
+  FileText, 
+  CheckCircle2, 
+  XCircle, 
+  AlertCircle, 
+  Loader2,
+  X,
+  ShieldAlert
+} from 'lucide-react';
+import { 
   getMembers, createMember, updateMember, deleteMember,
   getMemberMemberships, getMemberBalance, getMemberAttendance, getPayments 
 } from '../api/api';
@@ -127,19 +146,24 @@ export default function Members() {
   return (
     <div>
       <div className="page-header">
-        <div>
-          <h2 className="page-title">👥 Üyeler</h2>
-          <p className="page-subtitle">Olympus Fitness Center üye veritabanı yönetimi</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ background: 'var(--gold-glow)', padding: '10px', borderRadius: '12px', border: '1px solid var(--border-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Users size={28} className="text-gold" />
+          </div>
+          <div>
+            <h2 className="page-title">Üyeler</h2>
+            <p className="page-subtitle">Olympus Fitness Center üye veritabanı yönetimi</p>
+          </div>
         </div>
         <button className="btn btn-primary" onClick={openCreate}>
-          ＋ Yeni Üye Ekle
+          <Plus size={16} /> Yeni Üye Ekle
         </button>
       </div>
 
       <div className="card">
         <div className="card-header">
           <div className="search-bar">
-            🔍
+            <Search size={18} className="text-muted" />
             <input
               placeholder="İsim, TCKN veya e-posta ile ara..."
               value={search}
@@ -150,10 +174,14 @@ export default function Members() {
         </div>
 
         {loading ? (
-          <div className="loading-spinner"><div className="spinner" /></div>
+          <div className="loading-spinner">
+            <Loader2 size={36} className="text-gold" style={{ animation: 'spin 1s linear infinite' }} />
+          </div>
         ) : filtered.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">👥</div>
+            <div className="empty-icon">
+              <Users size={48} style={{ opacity: 0.5 }} />
+            </div>
             <p>Aradığınız kriterlere uygun üye bulunamadı.</p>
           </div>
         ) : (
@@ -171,23 +199,38 @@ export default function Members() {
                     <td className="td-muted">#{m.uye_id}</td>
                     <td>
                       <strong>{m.adi} {m.soyadi}</strong>
-                      {m.pasaport && <div className="td-muted" style={{fontSize:12}}>🛂 {m.pasaport}</div>}
+                      {m.pasaport && (
+                        <div className="td-muted" style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                          <FileText size={12} /> {m.pasaport}
+                        </div>
+                      )}
                     </td>
                     <td className="td-muted">{m.tckn}</td>
                     <td>{m.telefon}</td>
                     <td className="td-muted">{m.mail}</td>
                     <td className="td-muted">{formatDate(m.kayit_tarihi)}</td>
                     <td>
-                      {m.aktif_mi
-                        ? <span className="badge badge-green">✓ Aktif <span style={{fontSize:11}}>({m.kalan_gun} Gün Kaldı)</span></span>
-                        : <span className="badge badge-red">✗ Aktif Değil</span>
-                      }
+                      {m.aktif_mi ? (
+                        <span className="badge badge-green">
+                          <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Aktif <span style={{ fontSize: 11, marginLeft: 2 }}>({m.kalan_gun} Gün Kaldı)</span>
+                        </span>
+                      ) : (
+                        <span className="badge badge-red">
+                          <XCircle size={12} style={{ marginRight: 4 }} /> Aktif Değil
+                        </span>
+                      )}
                     </td>
                     <td>
                       <div className="flex gap-8">
-                        <button className="btn btn-secondary btn-sm" title="Detaylı Profil" onClick={() => openDetail(m)}>🔍</button>
-                        <button className="btn btn-secondary btn-sm" title="Düzenle" onClick={() => openEdit(m)}>✏️</button>
-                        <button className="btn btn-danger btn-sm"    title="Sil" onClick={() => handleDelete(m.uye_id)}>🗑️</button>
+                        <button className="btn btn-secondary btn-sm" title="Detaylı Profil" onClick={() => openDetail(m)}>
+                          <Search size={14} />
+                        </button>
+                        <button className="btn btn-secondary btn-sm" title="Düzenle" onClick={() => openEdit(m)}>
+                          <Edit size={14} />
+                        </button>
+                        <button className="btn btn-danger btn-sm" title="Sil" onClick={() => handleDelete(m.uye_id)}>
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -203,8 +246,13 @@ export default function Members() {
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModal(false)}>
           <div className="modal">
             <div className="modal-header">
-              <h3 className="modal-title">{editing ? '✏️ Üyeyi Düzenle' : '➕ Yeni Üye Ekle'}</h3>
-              <button className="modal-close" onClick={() => setModal(false)}>✕</button>
+              <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {editing ? <Edit size={20} className="text-gold" /> : <Plus size={20} className="text-gold" />}
+                {editing ? 'Üyeyi Düzenle' : 'Yeni Üye Ekle'}
+              </h3>
+              <button className="modal-close" onClick={() => setModal(false)}>
+                <X size={20} />
+              </button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
@@ -231,7 +279,19 @@ export default function Members() {
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setModal(false)}>İptal</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? '⏳ Kaydediliyor...' : editing ? '💾 Güncelle' : '＋ Ekle'}
+                  {saving ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Kaydediliyor...
+                    </span>
+                  ) : editing ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <Edit size={16} /> Güncelle
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <Plus size={16} /> Ekle
+                    </span>
+                  )}
                 </button>
               </div>
             </form>
@@ -244,16 +304,21 @@ export default function Members() {
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setDetailMember(null)}>
           <div className="modal" style={{ maxWidth: 700 }}>
             <div className="modal-header">
-              <h3 className="modal-title">🔍 Üye Detay Portalı</h3>
-              <button className="modal-close" onClick={() => setDetailMember(null)}>✕</button>
+              <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Search size={20} className="text-gold" />
+                Üye Detay Portalı
+              </h3>
+              <button className="modal-close" onClick={() => setDetailMember(null)}>
+                <X size={20} />
+              </button>
             </div>
 
             <div style={{ display: 'flex', gap: 12, borderBottom: '1px solid var(--border)', marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
               {[
-                { id: 'profil', label: '👤 Profil' },
-                { id: 'paket',  label: '🎯 Paket Geçmişi' },
-                { id: 'odeme',  label: '💳 Ödemeler & Bakiye' },
-                { id: 'katilim',label: '🚪 Katılım Günlüğü' },
+                { id: 'profil', label: <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><User size={16} /> Profil</span> },
+                { id: 'paket',  label: <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Award size={16} /> Paket Geçmişi</span> },
+                { id: 'odeme',  label: <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><CreditCard size={16} /> Ödemeler & Bakiye</span> },
+                { id: 'katilim',label: <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Clock size={16} /> Katılım Günlüğü</span> },
               ].map(t => (
                 <button
                   key={t.id}
@@ -278,7 +343,9 @@ export default function Members() {
             </div>
 
             {detailLoading ? (
-              <div className="loading-spinner"><div className="spinner" /></div>
+              <div className="loading-spinner">
+                <Loader2 size={36} className="text-gold" style={{ animation: 'spin 1s linear infinite' }} />
+              </div>
             ) : (
               <div>
                 {/* Profile Tab */}
@@ -289,9 +356,9 @@ export default function Members() {
                         width: 60, height: 60, borderRadius: '50%',
                         background: 'linear-gradient(135deg, var(--gold), var(--gold-dark))',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 28, boxShadow: 'var(--shadow-gold)', flexShrink: 0
+                        boxShadow: 'var(--shadow-gold)', flexShrink: 0
                       }}>
-                        🏋️
+                        <Dumbbell size={28} color="#0a0a0f" style={{ transform: 'rotate(-45deg)' }} />
                       </div>
                       <div>
                         <h2 style={{ fontSize: 20, fontWeight: 800 }}>{detailMember.adi} {detailMember.soyadi}</h2>
@@ -320,9 +387,13 @@ export default function Members() {
                         <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', marginBottom: 4 }}>Üyelik Durumu</span>
                         <div>
                           {detailMember.aktif_mi ? (
-                            <span className="badge badge-green" style={{ marginTop: 2 }}>✓ Aktif ({detailMember.kalan_gun} Gün Kaldı)</span>
+                            <span className="badge badge-green" style={{ marginTop: 2 }}>
+                              <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Aktif ({detailMember.kalan_gun} Gün Kaldı)
+                            </span>
                           ) : (
-                            <span className="badge badge-red" style={{ marginTop: 2 }}>✗ Aktif Değil</span>
+                            <span className="badge badge-red" style={{ marginTop: 2 }}>
+                              <XCircle size={12} style={{ marginRight: 4 }} /> Aktif Değil
+                            </span>
                           )}
                         </div>
                       </div>
@@ -330,11 +401,17 @@ export default function Members() {
                         <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', marginBottom: 4 }}>Kasa Bakiyesi</span>
                         <div style={{ marginTop: 2 }}>
                           {detailData.balance < 0 ? (
-                            <span className="badge badge-red">🔴 Borç: {formatTL(Math.abs(detailData.balance))}</span>
+                            <span className="badge badge-red">
+                              <AlertCircle size={12} style={{ marginRight: 4 }} /> Borç: {formatTL(Math.abs(detailData.balance))}
+                            </span>
                           ) : detailData.balance > 0 ? (
-                            <span className="badge badge-green">🟢 Alacak: {formatTL(detailData.balance)}</span>
+                            <span className="badge badge-green">
+                              <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Alacak: {formatTL(detailData.balance)}
+                            </span>
                           ) : (
-                            <span className="badge badge-gold">🟡 Borçsuz / Dengede</span>
+                            <span className="badge badge-gold">
+                              <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Borçsuz / Dengede
+                            </span>
                           )}
                         </div>
                       </div>
@@ -363,11 +440,17 @@ export default function Members() {
                               <td className="td-muted">{formatDate(m.bitis_tarihi)}</td>
                               <td>
                                 {m.durum === 'Aktif' ? (
-                                  <span className="badge badge-green">Aktif</span>
+                                  <span className="badge badge-green">
+                                    <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Aktif
+                                  </span>
                                 ) : m.durum === 'Pasif' ? (
-                                  <span className="badge badge-red">Pasif</span>
+                                  <span className="badge badge-red">
+                                    <XCircle size={12} style={{ marginRight: 4 }} /> Pasif
+                                  </span>
                                 ) : (
-                                  <span className="badge badge-orange">Beklemede</span>
+                                  <span className="badge badge-orange">
+                                    <Clock size={12} style={{ marginRight: 4 }} /> Beklemede
+                                  </span>
                                 )}
                               </td>
                             </tr>
@@ -388,7 +471,7 @@ export default function Members() {
                           {detailData.balance < 0 ? `- ${formatTL(Math.abs(detailData.balance))} (Borçlu)` : detailData.balance > 0 ? `+ ${formatTL(detailData.balance)} (Fazla Ödeme)` : '0,00 ₺ (Lunas)'}
                         </h4>
                       </div>
-                      <span style={{ fontSize: 28 }}>💳</span>
+                      <CreditCard size={28} className="text-gold" />
                     </div>
 
                     <div className="table-wrapper">
@@ -437,7 +520,7 @@ export default function Members() {
                             <tr key={a.log_id}>
                               <td className="td-muted">#{a.log_id}</td>
                               <td className="td-muted">{formatDate(a.giris_zamani)}</td>
-                              <td className="td-muted">{a.cikis_zamani ? formatDate(a.cikis_zamani) : <span className="badge badge-orange">İçeride</span>}</td>
+                              <td className="td-muted">{a.cikis_zamani ? formatDate(a.cikis_zamani) : <span className="badge badge-orange"><Clock size={12} style={{ marginRight: 4 }} /> İçeride</span>}</td>
                               <td>{a.sure_dakika != null ? <span className="badge badge-blue">{a.sure_dakika} dk</span> : '—'}</td>
                             </tr>
                           ))}

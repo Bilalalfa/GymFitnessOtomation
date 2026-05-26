@@ -1,5 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { 
+  DoorOpen, 
+  LogIn, 
+  LogOut, 
+  Clock, 
+  Search, 
+  Loader2, 
+  CheckCircle2, 
+  XCircle, 
+  AlertCircle, 
+  X 
+} from 'lucide-react';
 import { getAttendance, checkIn, checkOut, getMembers } from '../api/api';
 
 export default function Attendance() {
@@ -85,19 +97,31 @@ export default function Attendance() {
   return (
     <div>
       <div className="page-header">
-        <div>
-          <h2 className="page-title">🚪 Üye Katılım Kayıtları</h2>
-          <p className="page-subtitle">Üyelerin salona giriş-çıkış kayıtları (Süresi dolan üyeler otomatik engellenir)</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ background: 'var(--gold-glow)', padding: '10px', borderRadius: '12px', border: '1px solid var(--border-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <DoorOpen size={28} className="text-gold" />
+          </div>
+          <div>
+            <h2 className="page-title">Üye Katılım Kayıtları</h2>
+            <p className="page-subtitle">Üyelerin salona giriş-çıkış kayıtları (Süresi dolan üyeler otomatik engellenir)</p>
+          </div>
         </div>
         <div className="flex gap-8">
-          <span className="badge badge-blue">📅 Bugün: {todayLogs.length} Giriş</span>
-          <span className="badge badge-orange">🔴 İçeride: {logs.filter(l => !l.cikis_zamani).length} Üye</span>
+          <span className="badge badge-blue">
+            <Clock size={12} style={{ marginRight: 4 }} /> Bugün: {todayLogs.length} Giriş
+          </span>
+          <span className="badge badge-orange">
+            <AlertCircle size={12} style={{ marginRight: 4 }} /> İçeride: {logs.filter(l => !l.cikis_zamani).length} Üye
+          </span>
         </div>
       </div>
 
       {/* Check-in Panel */}
       <div className="card" style={{ marginBottom: 24 }}>
-        <h3 className="card-title" style={{ marginBottom: 16 }}>🏃 Yeni Üye Girişi Yap</h3>
+        <h3 className="card-title" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <LogIn size={20} className="text-gold" />
+          Yeni Üye Girişi Yap
+        </h3>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
           ⚡ Veritabanı tetikleyicisi (Trigger), üyeliği bulunmayan ya da süresi dolmuş üyelerin giriş yapmasını otomatik olarak engeller.
         </p>
@@ -125,8 +149,9 @@ export default function Attendance() {
                     setSearchQuery('');
                     setSelMember('');
                   }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  ✕
+                  <X size={16} />
                 </button>
               )}
               {showSuggestions && searchQuery && (
@@ -153,9 +178,13 @@ export default function Attendance() {
                           </span>
                         </div>
                         {m.aktif_mi ? (
-                          <span className="badge badge-green" style={{ fontSize: 10, padding: '2px 8px' }}>✓ Aktif</span>
+                          <span className="badge badge-green" style={{ fontSize: 10, padding: '2px 8px' }}>
+                            <CheckCircle2 size={10} style={{ marginRight: 4 }} /> Aktif
+                          </span>
                         ) : (
-                          <span className="badge badge-red" style={{ fontSize: 10, padding: '2px 8px' }}>✗ Aktif Değil</span>
+                          <span className="badge badge-red" style={{ fontSize: 10, padding: '2px 8px' }}>
+                            <XCircle size={10} style={{ marginRight: 4 }} /> Aktif Değil
+                          </span>
                         )}
                       </div>
                     ))
@@ -166,11 +195,19 @@ export default function Attendance() {
           </div>
           <button
             className="btn btn-primary"
-            style={{ height: 44 }}
+            style={{ height: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
             onClick={handleCheckIn}
             disabled={checkingIn || !selMember}
           >
-            {checkingIn ? '⏳...' : '🚪 Giriş Yap'}
+            {checkingIn ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Giriş...
+              </span>
+            ) : (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <LogIn size={16} /> Giriş Yap
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -179,7 +216,7 @@ export default function Attendance() {
       <div className="card">
         <div className="card-header">
           <div className="search-bar">
-            🔍
+            <Search size={18} className="text-muted" />
             <input placeholder="Üye adı veya TCKN ile ara..." value={search}
               onChange={e => setSearch(e.target.value)} />
           </div>
@@ -187,10 +224,14 @@ export default function Attendance() {
         </div>
 
         {loading ? (
-          <div className="loading-spinner"><div className="spinner" /></div>
+          <div className="loading-spinner">
+            <Loader2 size={36} className="text-gold" style={{ animation: 'spin 1s linear infinite' }} />
+          </div>
         ) : filtered.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">🚪</div>
+            <div className="empty-icon">
+              <DoorOpen size={48} style={{ opacity: 0.5 }} />
+            </div>
             <p>Salonda henüz herhangi bir giriş kaydı bulunmamaktadır.</p>
           </div>
         ) : (
@@ -213,22 +254,32 @@ export default function Attendance() {
                     <td className="td-muted">{fmtDt(l.giris_zamani)}</td>
                     <td className="td-muted">{fmtDt(l.cikis_zamani)}</td>
                     <td>
-                      {l.sure_dakika != null
-                        ? <span className="badge badge-blue">{l.sure_dakika} dk</span>
-                        : <span className="td-muted">—</span>
-                      }
+                      {l.sure_dakika != null ? (
+                        <span className="badge badge-blue">
+                          <Clock size={11} style={{ marginRight: 4 }} /> {l.sure_dakika} dk
+                        </span>
+                      ) : (
+                        <span className="td-muted">—</span>
+                      )}
                     </td>
                     <td>
-                      {l.cikis_zamani
-                        ? <span className="badge badge-green">✓ Çıkış Yapıldı</span>
-                        : <span className="badge badge-orange">🟡 İçeride</span>
-                      }
+                      {l.cikis_zamani ? (
+                        <span className="badge badge-green">
+                          <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Çıkış Yapıldı
+                        </span>
+                      ) : (
+                        <span className="badge badge-orange">
+                          <Clock size={12} style={{ marginRight: 4 }} /> İçeride
+                        </span>
+                      )}
                     </td>
                     <td>
                       {!l.cikis_zamani && (
                         <button className="btn btn-success btn-sm"
-                          onClick={() => handleCheckOut(l.log_id)}>
-                          🚶 Çıkış Yap
+                          onClick={() => handleCheckOut(l.log_id)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <LogOut size={14} /> Çıkış Yap
                         </button>
                       )}
                     </td>
