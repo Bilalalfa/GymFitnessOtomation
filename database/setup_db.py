@@ -98,7 +98,7 @@ statements = [
     END
     """,
 
-    # 2. tg_gym_cakisma_kontrol: Prevent overlapping active memberships
+    # 2. tg_gym_cakisma_kontrol: Prevent overlapping active memberships & check negative balance first
     """
     DROP TRIGGER IF EXISTS tg_gym_cakisma_kontrol;
     """,
@@ -108,6 +108,29 @@ statements = [
     FOR EACH ROW
     BEGIN
         DECLARE v_cakisma INT DEFAULT 0;
+        DECLARE v_borc FLOAT DEFAULT 0.0;
+        DECLARE v_odeme FLOAT DEFAULT 0.0;
+        DECLARE v_bakiye FLOAT DEFAULT 0.0;
+
+        -- 1. Check member's balance first
+        SELECT COALESCE(SUM(p.paket_fiyati), 0.0) INTO v_borc  
+        FROM gym_uye_uyelikleri uu
+        INNER JOIN gym_uyelik_paketleri p ON uu.paket_id = p.paket_id
+        WHERE uu.uye_id = NEW.uye_id;
+        
+        SELECT COALESCE(SUM(odeme_tutari), 0.0) INTO v_odeme  
+        FROM gym_odemeler 
+        WHERE uye_id = NEW.uye_id;
+        
+        SET v_bakiye = v_odeme - v_borc;
+
+        -- If current balance is negative, block the purchase
+        IF v_bakiye < 0 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Hata: Engellendi (Ditolak). Üyenin ödenmemiş borcu bulunmaktadır. Yeni paket satın alamaz!';
+        END IF;
+
+        -- 2. Check overlapping active memberships
         IF NEW.durum = 'Aktif' THEN
             SELECT COUNT(*) INTO v_cakisma
             FROM gym_uye_uyelikleri
@@ -153,6 +176,11 @@ statements = [
             SET NEW.sure_dakika = TIMESTAMPDIFF(MINUTE, NEW.giris_zamani, NEW.cikis_zamani);
         END IF;
     END
+    """,
+
+    # 5. clean up old bakiye trigger if exists
+    """
+    DROP TRIGGER IF EXISTS tg_gym_bakiye_kontrol;
     """,
 
     # ── PROCEDURES ────────────────────────────────────────────────────────────
